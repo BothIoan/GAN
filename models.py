@@ -1,10 +1,7 @@
 import torch.nn as nn
 import torch
-import math
-import matplotlib.pyplot as plt
-import torch.optim as optim
-from torch.nn.modules.activation import Softplus
-from PIL import Image
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class Generator1d(nn.Module):
     def __init__(self, inSize, midSize, outSize):
@@ -106,3 +103,10 @@ class Discriminator2d(nn.Module):
 
     def forward(self, input):
         return self.model(input)
+
+class Gan :
+    def __init__(self):
+        self.disc = Discriminator2d(channelSize= 3,featureSize=64,outSize= 1).to(device)
+        self.gen = Generator2d(channelSize= 3, featureSize= 64,inSize= 100).to(device)
+
+        

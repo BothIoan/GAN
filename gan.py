@@ -39,35 +39,36 @@ def train(
     learnRate = 0.001,
     clampLower=-0.01,
     clampHigher=0.01,
-    nrEpochs = 5,
+    nrEpochs = 1,
     ):
     optimD = optim.RMSprop(disc.parameters(), lr = learnRate)
     optimG = optim.RMSprop(gen.parameters(), lr = learnRate)
     for _ in range(nrEpochs):
         for  _,reals in enumerate(data):
-            reals = reals.to(device)
-            for _ in range (discReps):
-                fake = gen.forward(torch.rand(reals.shape[0],100,1,1).to(device))
-                disc_fake = disc.forward(fake)
-                disc_real = disc.forward(reals)
-                #gp = gradientPenalty(disc,reals,fake)
-                discLoss = torch.mean(disc_fake)-torch.mean(disc_real) #+ 0.1 * gp
+            for _ in range(5):
+                reals = reals.to(device)
+                for _ in range (discReps):
+                    fake = gen.forward(torch.rand(reals.shape[0],100,1,1).to(device))
+                    disc_fake = disc.forward(fake)
+                    disc_real = disc.forward(reals)
+                    #gp = gradientPenalty(disc,reals,fake)
+                    discLoss = torch.mean(disc_fake)-torch.mean(disc_real) #+ 0.1 * gp
+                    
+                    disc.zero_grad()
+                    discLoss.backward()
+                    optimD.step()
+
+                    for p in disc.parameters():
+                        p.data.clamp_(clampLower,clampHigher)
                 
-                disc.zero_grad()
-                discLoss.backward()
-                optimD.step()
+                for _ in range(genReps):
+                    fake = gen.forward(torch.rand(reals.shape[0],100,1,1).to(device))
+                    disc_fake= disc.forward(fake)
 
-                for p in disc.parameters():
-                    p.data.clamp_(clampLower,clampHigher)
-            
-            for _ in range(genReps):
-                fake = gen.forward(torch.rand(reals.shape[0],100,1,1).to(device))
-                disc_fake= disc.forward(fake)
-
-                genLoss = -torch.mean(disc_fake)
-                gen.zero_grad()
-                genLoss.backward()
-                optimG.step()
+                    genLoss = -torch.mean(disc_fake)
+                    gen.zero_grad()
+                    genLoss.backward()
+                    optimG.step()
           #  discLosses.append(discLoss.cpu().detach().numpy())
         
     #modify Generator and Discriminator. Dodon o dat link-uri.
