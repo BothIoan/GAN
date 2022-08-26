@@ -23,6 +23,7 @@ class lockedGens():
 def trainCore(gan):
     while True:
         data = gan.queue.get()
+        
         PCG_Models.train(
             data = data,
             disc = gan.disc,
@@ -30,10 +31,13 @@ def trainCore(gan):
             optimD= gan.optimD,
             optimG= gan.optimG
             )
-        gen = generators[gan.key]
-        gen.lock.acquire()
-        generators[gan.key].setGen(copy.deepcopy(gan.gen)) 
-        gen.lock.release()
+        if(gan.key in gans and gans[gan.key] is gan):
+            gen = generators[gan.key]
+            gen.lock.acquire()
+            generators[gan.key].setGen(copy.deepcopy(gan.gen)) 
+            gen.lock.release()
+        else:
+            return
 
 def requestTrain(gan, data):
     gan.queue.put(data)
@@ -95,7 +99,9 @@ def getAllCategs():
     print(toReturn[:-1])
 def deleteCateg(categName):
     clearAll()
-    shutil.rmtree("./categories/" + categName);
+    dir = "./categories/" + categName
+    if os.path.exists(dir):
+        shutil.rmtree(dir);
     
 #main
 while(True):
